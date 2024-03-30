@@ -9,16 +9,16 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from FileParser import FileToEdgeList
+from FileParser import EdgesFileParser
 
 
 def generateGraphFromFile(file_path):
-    edges = FileToEdgeList(file_path)
+    edges = EdgesFileParser(file_path)
     DG = nx.DiGraph()
     DG.add_weighted_edges_from(edges)
     return DG
 
-plt.show()
+
 graph = generateGraphFromFile("line.txt")
 print(graph.edges())
 pos = {0:[0,2],1:[1,2],2:[2,2],3:[3,2],4:[4,2]}
