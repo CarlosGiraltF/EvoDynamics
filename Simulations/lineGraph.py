@@ -3,7 +3,7 @@
 # Date: 29-3-24
 # Version: alpha
 # File: trial.py
-# Description: First time using networkx 
+# Description: Evolutionay dynamics on a line graph
 #-------------------------------------------------------------------------------------------------------------#
 
 import networkx as nx

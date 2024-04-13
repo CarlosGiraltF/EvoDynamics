@@ -18,12 +18,3 @@ def EdgesFileParser(file_path):
             edges.append(edge)
             line = f.readline()
     return edges
-
-
-def AdjMatrixParser(file_path):
-    with open(file_path, "r") as f:
-        row = f.readline()
-        edges = []
-        while row:
-            row = row[:-1]
-            
