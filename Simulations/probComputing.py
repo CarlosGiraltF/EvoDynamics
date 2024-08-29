@@ -36,10 +36,12 @@ def moran_process(G, fitness):
         # If all nodes are mutants, fixation occurs
         if num_mutants == len(G):
             done = True
+            continue
         
         # If no mutants left, extinction occurs
         if num_mutants == 0:
-            done = False
+            done = True
+            continue
         
         # Selection step: Choose a node to reproduce proportionally to fitness
         fitnesses = [fitness if state[node] == 1 else 1 for node in G.nodes]
@@ -70,18 +72,25 @@ def average_fixation_probability(G, fitness=1.0, num_simulations=1000):
     
     return fixation_counts / num_simulations
 
-# Example usage:
+G = nx.path_graph(10, create_using = nx.DiGraph)
+G.add_edge(9,9)
+
 # Create different graph structures
 graphs = {
-    "complete_graph": nx.complete_graph(10)
+    #"complete_graph": nx.complete_graph(10),
+    #"cycle_graph": nx.cycle_graph(10),
+    "line_graph": G
 }
 
 # Imput data:
 # argv[1] = fitness of mutant individuals 
 # argv[2] = number of simulations
 
-fitness = float(argv[1])
-num_simulations = int(argv[2])
+#fitness = float(argv[1])
+#num_simulations = int(argv[2])
+
+fitness = 4
+num_simulations = 200000
 
 # Compute average fixation probability for each graph
 for name, graph in graphs.items():
