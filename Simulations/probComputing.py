@@ -3,13 +3,116 @@
 # Date: 27-8-24
 # Version: alpha
 # File: probComputing.py
-# Description: Computes the average fixation probability of a given graph.
+# Description: Computes the average fixation probability of a given graph and plots results.
 #-------------------------------------------------------------------------------------------------------------#
 
 import networkx as nx
 import random
 import numpy as np
-from sys import argv
+import matplotlib.pyplot as plt
+import sys
+
+numSimulations = 10000
+
+def galanisGraph():
+    # Define the weight matrix
+    W = [
+        [0, 1/4, 3/4],
+        [1/4, 0, 3/4],
+        [1/2, 1/2, 0]
+    ]
+
+    # Create a directed graph
+    G = nx.DiGraph()
+
+    # Add weighted edges based on the weight matrix
+    for i in range(len(W)):
+        for j in range(len(W[i])):
+            if W[i][j] != 0:  # Only add an edge if the weight is non-zero
+                G.add_edge(i, j, weight=W[i][j])
+
+    # Draw the graph with edge labels
+    pos = nx.spring_layout(G)  # Layout for visualization
+    nx.draw(G, pos, with_labels=True, node_size=700, node_color='lightblue', font_size=10)
+    edge_labels = nx.get_edge_attributes(G, 'weight')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels={(i, j): f'{w:.2f}' for (i, j), w in edge_labels.items()})
+    plt.show()
+    return G
+
+
+
+def generateGraphs(size):
+    # Define different graph structures
+    G = nx.path_graph(size, create_using=nx.DiGraph)
+    G.add_edge(int(size) - 1, int(size) - 1)
+
+    graphs = {
+    "complete_graph": nx.complete_graph(size),
+    "cycle_graph": nx.cycle_graph(size),
+    "line_graph": G,
+    "star_graph": nx.star_graph(size)
+    }
+
+    return graphs
+
+
+def plotByFitness(size, minF, maxF, step):
+    graphs = generateGraphs(size)
+    fitness_values = np.arange(minF, maxF, step)
+    for name, graph in graphs.items():
+        fixation_probs = []
+        for fitness in fitness_values:
+            fixation_prob = average_fixation_probability(graph, fitness, numSimulations)
+            fixation_probs.append(fixation_prob)
+            print(f"Graph: {name}, Fitness: {fitness}, Fixation Probability: {fixation_prob}")
+    
+        # Plot fixation probability as a function of fitness
+        plt.figure()
+        plt.plot(fitness_values, fixation_probs, marker='o', linestyle='-', color='b')
+        plt.xlabel("Fitness")
+        plt.ylabel("Fixation Probability")
+        plt.title(f"{name}")
+        plt.grid(True)
+        plt.savefig(f"{name}_fixation_probability.png")  # Save each plot as a PNG file
+        plt.show()
+
+
+def plotByPopulationSize(minSize, maxSize, step, fitness):
+    """
+    Plots fixation probability as a function of population size for various graph types.
+    
+    Parameters:
+    - minSize: Minimum size of the graph (integer)
+    - maxSize: Maximum size of the graph (integer, exclusive in range)
+    - step: Step size to increase the graph size (integer)
+    - fitness: Fitness of the mutant type (float)
+    """
+    population_sizes = np.arange(minSize, maxSize, step)
+    
+    # Dictionary to store fixation probabilities for each graph type across sizes
+    fixation_probs_by_graph = {name: [] for name in ["complete_graph", "cycle_graph", "line_graph", "star_graph"]}
+    
+    for size in population_sizes:
+        # Generate graphs for the current size
+        graphs = generateGraphs(size)
+        
+        for name, graph in graphs.items():
+            # Compute fixation probability for the current graph, size, and fitness
+            fixation_prob = average_fixation_probability(graph, fitness, numSimulations)
+            fixation_probs_by_graph[name].append(fixation_prob)
+            print(f"Graph: {name}, Size: {size}, Fitness: {fitness}, Fixation Probability: {fixation_prob}")
+    
+    # Plot fixation probability as a function of population size for each graph type
+    for name, fixation_probs in fixation_probs_by_graph.items():
+        plt.figure()
+        plt.plot(population_sizes, fixation_probs, marker='o', linestyle='-', color='b')
+        plt.xlabel("Population Size")
+        plt.ylabel("Fixation Probability")
+        plt.title(f"{name} (Fitness: {fitness})")
+        plt.grid(True)
+        plt.savefig(f"{name}_population_size_fixation_probability.png")  # Save each plot as a PNG file
+        plt.show()
+
 
 def moran_process(G, fitness):
     """
@@ -39,7 +142,7 @@ def moran_process(G, fitness):
             continue
         
         # If no mutants left, extinction occurs
-        if num_mutants == 0:
+        elif num_mutants == 0:
             done = True
             continue
         
@@ -72,27 +175,26 @@ def average_fixation_probability(G, fitness=1.0, num_simulations=1000):
     
     return fixation_counts / num_simulations
 
-G = nx.path_graph(10, create_using = nx.DiGraph)
-G.add_edge(9,9)
+if __name__ == '__main__':
+    if (sys.argv[1] == '-fitnessTest'):
+        size = int(sys.argv[2])
+        minF = float(sys.argv[3])
+        maxF = float(sys.argv[4])
+        step = float(sys.argv[5])
+        plotByFitness(size, minF, maxF, step)
+    
+    elif (sys.argv[1] == '-sizeTest'):
+        minSize = int(sys.argv[2])
+        maxSize = int(sys.argv[3])
+        step = int(sys.argv[4])
+        fitness = float(sys.argv[5])
+        plotByPopulationSize(minSize, maxSize, step, fitness)
+    
+    elif (sys.argv[1] == '-counterExample'):
+        G = galanisGraph()
+        avg_fix_prob = average_fixation_probability(G, 1.5, 200000)
+        print(f"The average fixation probability of the graph is {avg_fix_prob}")
 
-# Create different graph structures
-graphs = {
-    #"complete_graph": nx.complete_graph(10),
-    #"cycle_graph": nx.cycle_graph(10),
-    "line_graph": G
-}
 
-# Imput data:
-# argv[1] = fitness of mutant individuals 
-# argv[2] = number of simulations
+        
 
-#fitness = float(argv[1])
-#num_simulations = int(argv[2])
-
-fitness = 4
-num_simulations = 200000
-
-# Compute average fixation probability for each graph
-for name, graph in graphs.items():
-    fixation_prob = average_fixation_probability(graph, fitness, num_simulations)
-    print(f"{name}: {fixation_prob}")
