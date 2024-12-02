@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-numSimulations = 10000
+numSimulations = 100000
 
 def fixSupressorGraph(size):
     K = nx.complete_graph(size, create_using=nx.DiGraph)
