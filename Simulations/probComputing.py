@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-numSimulations = 100000
+numSimulations = 10000
 
 def fixSupressorGraph(size):
     K = nx.complete_graph(size, create_using=nx.DiGraph)
@@ -170,9 +170,10 @@ def moran_process(G, fitness):
         fitnesses = [fitness if state[node] == 1 else 1 for node in G.nodes]
         reproducer = random.choices(list(G.nodes), weights=fitnesses, k=1)[0]
         
-        # Reproduction step: Choose a neighbor to replace
-        neighbor = random.choice(list(G.neighbors(reproducer)))
-        state[neighbor] = state[reproducer]
+        neighbors = list(G.neighbors(reproducer))
+        weights = [G[reproducer][neighbor].get('weight', 1/len(G.nodes)) for neighbor in neighbors]
+        replaced = random.choices(neighbors, weights=weights, k=1)[0]
+        state[replaced] = state[reproducer]
         iter += 1
     
     return 1 if sum(state.values()) == len(G) else 0
