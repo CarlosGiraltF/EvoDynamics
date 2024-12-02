@@ -12,20 +12,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-numSimulations = 10000
+numSimulations = 100000
 
 def fixSupressorGraph(size):
-    K = nx.complete_graph(size)
-    C = nx.cycle_graph(size)
-    print("antes de union")
+    K = nx.complete_graph(size, create_using=nx.DiGraph)
+    C = nx.cycle_graph(size, create_using=nx.DiGraph)
     # Step 2: Combine the graphs
-    G = nx.disjoint_union(K, C)
-    print("despues de union")
+    G = nx.disjoint_union(C, K)
 
     # Step 3: Add a single edge connecting the two graphs
     G.add_edge(0, size)  # Connect a node from K (e.g., node 0) to a node in C (e.g., node n)
 
-    nx.draw(G)
+    #nx.draw(G)
+    #plt.show()
 
     return G 
 
@@ -60,12 +59,12 @@ def generateGraphs(size):
     
 
     graphs = {
-    #"complete_graph": nx.complete_graph(size),
-    #"cycle_graph": nx.cycle_graph(size),
-    #"line_graph": lineG,
-    #"star_graph": nx.star_graph(size),
+    "complete_graph": nx.complete_graph(size),
+    "cycle_graph": nx.cycle_graph(size),
+    "line_graph": lineG,
+    "star_graph": nx.star_graph(size),
     "fixation_supressor": supressorG,
-    #"galanis_graph": galanisGraph()
+    "galanis_graph": galanisGraph()
     }
 
     return graphs
@@ -86,7 +85,7 @@ def plotByFitness(size, minF, maxF, step):
         plt.plot(fitness_values, fixation_probs, marker='o', linestyle='-', color='b')
         plt.xlabel("Fitness")
         plt.ylabel("Fixation Probability")
-        #plt.title(f"{name}")
+        plt.ylim(0, 1)
         plt.grid(True)
         plt.savefig(f"{name}_fixation_probability.png")  # Save each plot as a PNG file
         plt.show()
@@ -147,8 +146,13 @@ def moran_process(G, fitness):
     state[mutant_node] = 1
 
     done = False
+
+    # to avoid infinite loops or computational costs that are extremely high
+    # this can be deleted if the computer used has a fast CPU or you don't have
+    # a time limitation to simulate the whole process
+    iter = 0
     
-    while not done:
+    while not done and iter < 50**4:
         # Count the number of mutants
         num_mutants = sum(state.values())
         
@@ -169,9 +173,13 @@ def moran_process(G, fitness):
         # Reproduction step: Choose a neighbor to replace
         neighbor = random.choice(list(G.neighbors(reproducer)))
         state[neighbor] = state[reproducer]
+        iter += 1
     
     return 1 if sum(state.values()) == len(G) else 0
 
+# it runs 1000 iterations by default, but this value can be modified
+# the macro numSimulations is stablished at the begining of the file and 
+# is equal to 100000
 def average_fixation_probability(G, fitness=1.0, num_simulations=1000):
     """
     Computes the average fixation probability for a given graph G over multiple simulations.
@@ -179,7 +187,7 @@ def average_fixation_probability(G, fitness=1.0, num_simulations=1000):
     Parameters:
     - G: networkx Graph
     - fitness: Fitness of the mutant type (default: 1.0)
-    - num_simulations: Number of simulations to run (default: 1000)
+    - num_simulations: Number of simulations to run (default: 100000)
     
     Returns:
     - Average fixation probability
@@ -208,14 +216,16 @@ if __name__ == '__main__':
     
     elif (sys.argv[1] == '-counterExampleProb'):
         fitness = int(sys.argv[2])
-        numSimulations = int(sys.argv[3])
         G = galanisGraph()
         avg_fix_prob = average_fixation_probability(G, fitness, numSimulations)
         print(f"The average fixation probability of the graph is {avg_fix_prob}")
+
     elif (sys.argv[1] == '-sup'):
-        G = fixSupressorGraph(10)
-        #avg_fix_prob = average_fixation_probability(G, 2, 1000)
-        #eprint(f"The average fixation probability of the graph is {avg_fix_prob}")
+        size = int(sys.argv[2])
+        fitness = float(sys.argv[3])
+        G = fixSupressorGraph(size)
+        avg_fix_prob = average_fixation_probability(G, fitness, numSimulations)
+        print(f"The average fixation probability of the graph is {avg_fix_prob}")
 
         
 
