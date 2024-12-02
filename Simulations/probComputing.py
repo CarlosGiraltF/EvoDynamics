@@ -171,7 +171,8 @@ def moran_process(G, fitness):
         reproducer = random.choices(list(G.nodes), weights=fitnesses, k=1)[0]
         
         neighbors = list(G.neighbors(reproducer))
-        weights = [G[reproducer][neighbor].get('weight', 1/len(G.nodes)) for neighbor in neighbors]
+        n = len(neighbors)
+        weights = [G[reproducer][neighbor].get('weight', 1/n) for neighbor in neighbors]
         replaced = random.choices(neighbors, weights=weights, k=1)[0]
         state[replaced] = state[reproducer]
         iter += 1
